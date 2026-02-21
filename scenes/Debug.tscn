@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="uid://cdebugscn001"]
+
+[ext_resource type="PackedScene" uid="uid://chexmap00001" path="res://world/HexMap.tscn" id="1_hexmap"]
+[ext_resource type="Script" path="res://systems/CameraController.gd" id="2_camera"]
+[ext_resource type="Script" path="res://scenes/DebugOverlay.gd" id="3_debug"]
+
+[node name="Debug" type="Node3D"]
+
+[node name="HexMap" parent="." instance=ExtResource("1_hexmap")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.573, 0.819, 0, -0.819, 0.573, 8, 12, 15)
+script = ExtResource("2_camera")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 10, 20, 10)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_001")
+
+[node name="DebugOverlay" type="CanvasLayer" parent="."]
+
+[node name="DebugLabel" type="Label" parent="DebugOverlay"]
+offset_right = 400.0
+offset_bottom = 200.0
+text = "Holdfast Debug — Click a tile"
+script = ExtResource("3_debug")
+
+[sub_resource type="Environment" id="Environment_001"]
+background_mode = 1
+background_color = Color(0.4, 0.6, 0.8, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.8, 0.8, 0.9, 1)
+ambient_light_energy = 0.5

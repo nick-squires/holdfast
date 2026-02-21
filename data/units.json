@@ -1,0 +1,125 @@
+{
+  "farmer": {
+    "display_name": "Farmer",
+    "mesh_key": "unit_farmer",
+    "cost": { "gold": 20 },
+    "hp": 40,
+    "damage": 5,
+    "speed": 1.0,
+    "type": "worker",
+    "special": "food_bonus",
+    "special_value": 1.20,
+    "assigned_building": "farm"
+  },
+  "lumberjack": {
+    "display_name": "Lumberjack",
+    "mesh_key": "unit_lumberjack",
+    "cost": { "gold": 25 },
+    "hp": 50,
+    "damage": 8,
+    "speed": 1.0,
+    "type": "worker",
+    "special": "wood_bonus",
+    "special_value": 1.25,
+    "assigned_building": "lumbermill"
+  },
+  "miner": {
+    "display_name": "Miner",
+    "mesh_key": "unit_miner",
+    "cost": { "gold": 30 },
+    "hp": 60,
+    "damage": 8,
+    "speed": 1.0,
+    "type": "worker",
+    "special": "stone_iron_bonus",
+    "special_value": 1.25,
+    "assigned_building": "mine"
+  },
+  "knight": {
+    "display_name": "Knight",
+    "mesh_key": "unit_knight",
+    "cost": { "gold": 60 },
+    "hp": 120,
+    "damage": 20,
+    "speed": 1.2,
+    "type": "combat",
+    "combat_type": "melee",
+    "patrol_radius": 2
+  },
+  "archer": {
+    "display_name": "Archer",
+    "mesh_key": "unit_archer",
+    "cost": { "gold": 50 },
+    "hp": 70,
+    "damage": 15,
+    "speed": 1.0,
+    "type": "combat",
+    "combat_type": "ranged",
+    "attack_range": 3
+  },
+  "mage": {
+    "display_name": "Mage",
+    "mesh_key": "unit_mage",
+    "cost": { "gold": 80 },
+    "hp": 60,
+    "damage": 30,
+    "speed": 0.8,
+    "type": "combat",
+    "combat_type": "aoe",
+    "attack_range": 2,
+    "aoe_radius": 2,
+    "cooldown": 3.0
+  },
+  "skeleton": {
+    "display_name": "Skeleton",
+    "mesh_key": "unit_skeleton",
+    "hp": 30,
+    "damage": 8,
+    "speed": 0.8,
+    "type": "enemy",
+    "appears_night": 1,
+    "target_priority": "center"
+  },
+  "skeleton_soldier": {
+    "display_name": "Skeleton Soldier",
+    "mesh_key": "unit_skeleton_soldier",
+    "hp": 60,
+    "damage": 15,
+    "speed": 0.7,
+    "type": "enemy",
+    "appears_night": 3,
+    "target_priority": "barracks"
+  },
+  "skeleton_archer": {
+    "display_name": "Skeleton Archer",
+    "mesh_key": "unit_skeleton_archer",
+    "hp": 40,
+    "damage": 12,
+    "speed": 0.6,
+    "type": "enemy",
+    "appears_night": 5,
+    "attack_range": 3,
+    "target_priority": "ranged"
+  },
+  "skeleton_champ": {
+    "display_name": "Skeleton Champion",
+    "mesh_key": "unit_skeleton_champ",
+    "hp": 150,
+    "damage": 30,
+    "speed": 0.5,
+    "type": "enemy",
+    "appears_night": 7,
+    "target_priority": "buildings"
+  },
+  "skeleton_king": {
+    "display_name": "Skeleton King",
+    "mesh_key": "unit_skeleton_king",
+    "hp": 500,
+    "damage": 50,
+    "speed": 0.4,
+    "type": "enemy",
+    "appears_night": 10,
+    "target_priority": "center",
+    "on_death_spawn": { "type": "unit_skeleton", "count": 3 }
+  }
+}

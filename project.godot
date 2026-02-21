@@ -13,6 +13,15 @@ config_version=5
 config/name="Holdfast"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/Debug.tscn"
+
+[autoload]
+
+SignalBus="*res://autoloads/SignalBus.gd"
+GameState="*res://autoloads/GameState.gd"
+AssetRegistry="*res://autoloads/AssetRegistry.gd"
+DataLoader="*res://autoloads/DataLoader.gd"
+ResourceManager="*res://autoloads/ResourceManager.gd"
 
 [physics]
 

@@ -1,0 +1,30 @@
+{
+  "grass": {
+    "display_name": "Grassland",
+    "tile_key": "tile_grass",
+    "movement_cost": 1,
+    "buildable": true,
+    "decorations": []
+  },
+  "forest": {
+    "display_name": "Forest",
+    "tile_key": "tile_grass",
+    "movement_cost": 2,
+    "buildable": true,
+    "decorations": ["decor_tree_A", "decor_tree_B", "decor_trees_A_large", "decor_trees_A_medium"]
+  },
+  "mountain": {
+    "display_name": "Mountain",
+    "tile_key": "tile_grass_sloped_high",
+    "movement_cost": 3,
+    "buildable": true,
+    "decorations": ["decor_mountain_A", "decor_mountain_A_grass", "decor_rock_A", "decor_rock_B"]
+  },
+  "water": {
+    "display_name": "Water",
+    "tile_key": "tile_water",
+    "movement_cost": -1,
+    "buildable": false,
+    "decorations": []
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "1": {
+    "night": 1,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 6 }
+    ],
+    "description": "A handful of skeletons emerge from the darkness."
+  },
+  "2": {
+    "night": 2,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 10 }
+    ],
+    "description": "More skeletons crawl from the earth."
+  },
+  "3": {
+    "night": 3,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 10 },
+      { "type": "unit_skeleton_soldier", "count": 4 }
+    ],
+    "description": "Armored soldiers join the skeleton horde."
+  },
+  "4": {
+    "night": 4,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 12 },
+      { "type": "unit_skeleton_soldier", "count": 6 }
+    ],
+    "description": "The dead grow bolder."
+  },
+  "5": {
+    "night": 5,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 12 },
+      { "type": "unit_skeleton_soldier", "count": 6 },
+      { "type": "unit_skeleton_archer", "count": 4 }
+    ],
+    "description": "Skeleton archers take position on the hills."
+  },
+  "6": {
+    "night": 6,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 14 },
+      { "type": "unit_skeleton_soldier", "count": 8 },
+      { "type": "unit_skeleton_archer", "count": 6 }
+    ],
+    "description": "A relentless assault from all sides."
+  },
+  "7": {
+    "night": 7,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 14 },
+      { "type": "unit_skeleton_soldier", "count": 8 },
+      { "type": "unit_skeleton_archer", "count": 6 },
+      { "type": "unit_skeleton_champ", "count": 2 }
+    ],
+    "description": "Champions stride among the dead."
+  },
+  "8": {
+    "night": 8,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 16 },
+      { "type": "unit_skeleton_soldier", "count": 10 },
+      { "type": "unit_skeleton_archer", "count": 6 },
+      { "type": "unit_skeleton_champ", "count": 3 }
+    ],
+    "description": "The earth trembles with the march of the dead."
+  },
+  "9": {
+    "night": 9,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 18 },
+      { "type": "unit_skeleton_soldier", "count": 12 },
+      { "type": "unit_skeleton_archer", "count": 8 },
+      { "type": "unit_skeleton_champ", "count": 4 }
+    ],
+    "description": "The full army of the dead assembles."
+  },
+  "10": {
+    "night": 10,
+    "is_siege": true,
+    "enemies": [
+      { "type": "unit_skeleton", "count": 20 },
+      { "type": "unit_skeleton_soldier", "count": 12 },
+      { "type": "unit_skeleton_archer", "count": 8 },
+      { "type": "unit_skeleton_champ", "count": 5 },
+      { "type": "unit_skeleton_king", "count": 1 }
+    ],
+    "description": "THE SIEGE. The Necromancer leads the final assault."
+  }
+}

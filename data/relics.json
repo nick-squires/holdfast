@@ -1,0 +1,44 @@
+{
+  "sunstone": {
+    "display_name": "Sunstone Amulet",
+    "description": "Day phase lasts 15 seconds longer.",
+    "effect_key": "extend_day",
+    "effect_value": 15,
+    "cost": { "gold": 100 }
+  },
+  "ironbark": {
+    "display_name": "Ironbark Shield",
+    "description": "All buildings gain +20 max HP.",
+    "effect_key": "building_hp_bonus",
+    "effect_value": 20,
+    "cost": { "gold": 80 }
+  },
+  "harvest_horn": {
+    "display_name": "Horn of Harvest",
+    "description": "All production buildings yield +25% resources.",
+    "effect_key": "production_bonus",
+    "effect_value": 1.25,
+    "cost": { "gold": 120 }
+  },
+  "bone_ward": {
+    "display_name": "Bone Ward",
+    "description": "Skeletons take 10% more damage.",
+    "effect_key": "enemy_damage_taken",
+    "effect_value": 1.10,
+    "cost": { "gold": 90 }
+  },
+  "moonwell": {
+    "display_name": "Moonwell Crystal",
+    "description": "Adventurers heal 20 HP at dawn.",
+    "effect_key": "dawn_heal",
+    "effect_value": 20,
+    "cost": { "gold": 75 }
+  },
+  "crown_of_command": {
+    "display_name": "Crown of Command",
+    "description": "All adventurers deal +5 damage.",
+    "effect_key": "unit_damage_bonus",
+    "effect_value": 5,
+    "cost": { "gold": 150 }
+  }
+}

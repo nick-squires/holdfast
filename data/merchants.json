@@ -1,0 +1,22 @@
+{
+  "merchant_day4": {
+    "display_name": "Traveling Merchant",
+    "arrives_day": 4,
+    "inventory": [
+      { "type": "relic", "id": "sunstone" },
+      { "type": "relic", "id": "ironbark" },
+      { "type": "resource", "resource": "iron", "amount": 20, "cost": { "gold": 40 } },
+      { "type": "resource", "resource": "food", "amount": 30, "cost": { "gold": 30 } }
+    ]
+  },
+  "merchant_day6": {
+    "display_name": "Arcane Dealer",
+    "arrives_day": 6,
+    "inventory": [
+      { "type": "relic", "id": "harvest_horn" },
+      { "type": "relic", "id": "bone_ward" },
+      { "type": "relic", "id": "moonwell" },
+      { "type": "resource", "resource": "iron", "amount": 30, "cost": { "gold": 50 } }
+    ]
+  }
+}

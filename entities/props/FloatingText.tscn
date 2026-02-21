@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cfloattext01"]
+
+[ext_resource type="Script" path="res://entities/props/FloatingText.gd" id="1_script"]
+
+[node name="FloatingText" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Label3D" type="Label3D" parent="."]
+billboard = 1
+font_size = 32
+outline_size = 4

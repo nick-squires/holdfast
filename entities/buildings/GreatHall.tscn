@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgreathall01"]
+
+[ext_resource type="Script" path="res://entities/buildings/Building.gd" id="1_script"]
+
+[node name="GreatHall" type="Node3D"]
+script = ExtResource("1_script")
+mesh_key = "building_great_hall"
+data_id = "great_hall"
