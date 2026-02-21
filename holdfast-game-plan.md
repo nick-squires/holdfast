@@ -61,7 +61,8 @@ The "survival" phase. Mostly passive for the player.
 The "recover" phase.
 - Last skeleton dies → DAWN triggers
 - Gravestones sink back into the ground
-- Ruined buildings show a "repair?" prompt (costs resources)
+- Ruined buildings show a "repair?" prompt (costs 50% of original build cost, rounded up)
+- Repaired buildings restore to 50% max HP; full repair requires a second dawn or a blacksmith
 - Dead adventurers are counted; a summary card shows kills/losses
 - Light warms back to morning tone
 - Day number increments, DAY phase begins
@@ -74,14 +75,14 @@ Six resources, each backed by a specific KayKit Resource Bits model displayed on
 
 | Resource | Source | Used For | KayKit Model |
 |---|---|---|---|
-| **Wood** | Lumbermill (adjacent to forest tile) | Most buildings, repairs | `log_stack.glb` |
-| **Stone** | Mine (adjacent to mountain tile) | Advanced buildings, walls | `stone_pile.glb` |
-| **Iron** | Mine (mountain tile, unlocked day 3) | Weapons, barracks upgrade | `iron_ingot.glb` |
-| **Food** | Farm (grass tile, requires well nearby) | Adventurer upkeep per night | `food_basket.glb` |
-| **Gold** | Market + Tavern income | Hiring adventurers, merchants | `gold_coins.glb` |
-| **Textiles** | Windmill → Weaver (chain building) | Unlocking Series 4/5 merchants | `textile_bolt.glb` |
+| **Wood** | Lumbermill (adjacent to forest tile) | Most buildings, repairs | `Wood_Log_Stack.gltf` (Resource Bits) |
+| **Stone** | Mine (adjacent to mountain tile) | Advanced buildings, walls | `Stone_Bricks_Stack_Small.gltf` (Resource Bits) |
+| **Iron** | Mine (mountain tile, unlocked day 3) | Weapons, barracks upgrade | `Iron_Bar.gltf` (Resource Bits) |
+| **Food** | Farm (grass tile, requires well nearby) | Adventurer upkeep per night | `Food_Basket_A_Berries.gltf` (Resource Bits) |
+| **Gold** | Market + Tavern income | Hiring adventurers, merchants | `Money_Coins_Stack_Small.gltf` (Resource Bits) |
+| **Textiles** | Weaver (requires adjacent Windmill) | Unlocking Series 4/5 merchants | `Textiles_Stack_Small.gltf` (Resource Bits) |
 
-**Upkeep mechanic:** Each adventurer costs 1 Food/night. If food drops to 0, adventurers don't die — they fight at 50% effectiveness and complain (audio bark). This creates a soft ceiling on army size without hard-punishing the player.
+**Upkeep mechanic:** Each adventurer costs 1 Food/night. Upkeep is deducted at night start via `ResourceManager.apply_upkeep()`. If food drops to 0, adventurers don't die — they fight at 50% effectiveness and complain (audio bark). This creates a soft ceiling on army size without hard-punishing the player.
 
 ---
 
@@ -89,11 +90,15 @@ Six resources, each backed by a specific KayKit Resource Bits model displayed on
 
 All from **Medieval Hexagon Pack**. Buildings come in 4 color variants (blue/red/green/yellow) — used in Holdfast for **upgrade tiers** (green=basic, blue=upgraded, red=fortified, yellow=legendary).
 
+> **Asset note:** There is no "farm" building model in the Medieval Hexagon Pack. Use
+> `building_home_A_green.gltf` or `building_watermill_green.gltf` as the Farm visual.
+> Blacksmith uses the actual `building_blacksmith_green.gltf` in the pack.
+
 | Building | Terrain Req | Cost | Output | Special |
 |---|---|---|---|---|
 | **Lumbermill** | Adjacent to forest | 40w | 30 wood/day | Workers animate inside |
 | **Mine** | On/adjacent to mountain | 60w 20s | 20 stone/day, 10 iron/day | Unlocks iron on day 3 |
-| **Farm** | Grass, near well | 30w | 20 food/day | Requires well within 2 hexes |
+| **Farm** | Grass, near well | 30w | 20 food/day | Requires well within 2 hexes (mesh: `building_home_A`) |
 | **Well** | Grass | 20w 10s | Enables farms | Passive |
 | **Blacksmith** | Any | 50w 30s 10i | Unlocks weapon upgrades | Menu building |
 | **Barracks** | Any | 60w 30s 10i | +2 melee defenders/night | Workers become knights at night |
@@ -101,35 +106,45 @@ All from **Medieval Hexagon Pack**. Buildings come in 4 color variants (blue/red
 | **Church** | Any | 80w 40s | +5 settlement max HP | Passive; holy aura slows skeletons 1 tile radius |
 | **Tavern** | Any | 60w 20g | +gold/day, hire menu | Series 4/5 merchants visit |
 | **Market** | Near road tile | 40w 20s | +15 gold/day | Road adjacency bonus |
-| **Windmill** | Open grass (no adj buildings) | 50w | Enables weaver | Visual rotating blades |
+| **Windmill** | Open grass (no adj buildings) | 50w | Enables Weaver | Visual rotating blades |
+| **Weaver** | Adjacent to Windmill | 40w 10g | 10 textiles/day | Requires Windmill within 1 hex |
 | **Great Hall** | Center tile only | 200w 100s 50i 50g | **WIN CONDITION** | Unlocks on day 7, takes 3 days to build |
 
 ---
 
 ## Unit Roster
 
-### Adventurers (Character Pack Adventurers)
+### Adventurers (KayKit Adventurers 2.0)
 Each costs gold to hire at the Tavern. They work in buildings by day and fight by night.
 
-| Unit | Cost | HP | DMG | Special |
-|---|---|---|---|---|
-| **Farmer** | 20g | 40 | 5 | +20% food output when assigned to farm |
-| **Lumberjack** | 25g | 50 | 8 | +25% wood output at lumbermill |
-| **Miner** | 30g | 60 | 8 | +25% stone/iron output |
-| **Knight** | 60g | 120 | 20 | Melee, patrols 2 tiles |
-| **Archer** | 50g | 70 | 15 | Ranged 3 tiles, stays at tower |
-| **Mage** | 80g | 60 | 30 | AoE 2-tile radius, slow cooldown |
+> **Model mapping:** The Adventurers 2.0 pack does not have farmer/lumberjack/miner models.
+> Available models: `Barbarian.glb`, `Barbarian_Large.glb`, `Druid.glb`, `Engineer.glb`,
+> `Knight.glb`, `Mage.glb`, `Ranger.glb`, `Rogue.glb`, `Rogue_Hooded.glb`.
+> Repurpose as shown below.
 
-### Skeletons (Character Pack Skeletons)
+| Unit | Model File | Cost | HP | DMG | Special |
+|---|---|---|---|---|---|
+| **Farmer** | `Engineer.glb` | 20g | 40 | 5 | +20% food output when assigned to farm |
+| **Lumberjack** | `Barbarian.glb` | 25g | 50 | 8 | +25% wood output at lumbermill |
+| **Miner** | `Rogue.glb` | 30g | 60 | 8 | +25% stone/iron output |
+| **Knight** | `Knight.glb` | 60g | 120 | 20 | Melee, patrols 2 tiles |
+| **Archer** | `Ranger.glb` | 50g | 70 | 15 | Ranged 3 tiles, stays at tower |
+| **Mage** | `Mage.glb` | 80g | 60 | 30 | AoE 2-tile radius, slow cooldown |
+
+### Skeletons (KayKit Skeletons 1.1)
 Scale in type and count per wave.
 
-| Type | Appears | HP | DMG | Special |
-|---|---|---|---|---|
-| **Skeleton Basic** | Night 1+ | 30 | 8 | Pathfinds to center |
-| **Skeleton Soldier** | Night 3+ | 60 | 15 | Targets barracks first |
-| **Skeleton Archer** | Night 5+ | 40 | 12 | Hangs back, ranged |
-| **Skeleton Champion** | Night 7+ | 150 | 30 | Breaks building in 2 hits |
-| **Skeleton King** | Siege Night | 500 | 50 | Boss, spawns 3 basics on death |
+> **Model mapping:** The Skeletons 1.1 pack contains: `Skeleton_Minion.glb`,
+> `Skeleton_Warrior.glb`, `Skeleton_Rogue.glb`, `Skeleton_Mage.glb`,
+> `Skeleton_Golem.glb`, `Necromancer.glb`. Mapped as shown below.
+
+| Type | Model File | Appears | HP | DMG | Special |
+|---|---|---|---|---|---|
+| **Skeleton Basic** | `Skeleton_Minion.glb` | Night 1+ | 30 | 8 | Pathfinds to center |
+| **Skeleton Soldier** | `Skeleton_Warrior.glb` | Night 3+ | 60 | 15 | Targets barracks first |
+| **Skeleton Archer** | `Skeleton_Rogue.glb` | Night 5+ | 40 | 12 | Hangs back, ranged |
+| **Skeleton Champion** | `Skeleton_Golem.glb` | Night 7+ | 150 | 30 | Breaks building in 2 hits |
+| **Skeleton King** | `Necromancer.glb` | Siege Night | 500 | 50 | Boss, spawns 3 basics on death |
 
 ---
 
@@ -146,7 +161,7 @@ Scale in type and count per wave.
 | 7 | 22 mixed | Great Hall construction unlocks |
 | 8 | 25 mixed + 1 champion | Great Hall is under threat |
 | 9 | 30 mixed + 2 champions | Skeletons prioritize Great Hall |
-| 10 (SIEGE) | 50 all types + Skeleton King | Final boss wave |
+| 10 (SIEGE) | 46 all types + Skeleton King | Final boss wave |
 
 **Win:** Great Hall construction completes (requires 3 full days uninterrupted).
 **Loss:** Settlement HP reaches 0 (starts at 100, each skeleton reaching center = -10, building destruction = -5).
@@ -170,7 +185,7 @@ Relics persist for the run and are shown in a small relic bar in the HUD. Exampl
 
 # 2. Architecture
 
-## Godot 4 Project Structure
+## Godot 4.6 Project Structure
 
 ```
 holdfast/
@@ -246,19 +261,25 @@ holdfast/
 │
 └── assets/
     └── kaykit/
-        ├── medieval_hexagon/          ← see Asset Mapping section
-        ├── resource_bits/
-        ├── adventurers/
-        ├── skeletons/
-        ├── character_animations/
-        ├── rpg_tools_bits/
-        ├── halloween_bits/
-        ├── furniture_bits/
-        ├── forest_nature/
-        ├── city_builder_bits/         ← road tiles, market props
-        ├── dungeon_remastered/        ← mine interior subscene
-        └── series_4_5/                ← merchant characters
+        ├── KayKit Medieval Hexagon Pack 1.0.1/    ← tiles (.gltf), buildings, decoration
+        ├── KayKit Resource Bits 1.0/              ← resource world props (.gltf)
+        ├── KayKit Adventurers 2.0/                ← player character models (.glb)
+        ├── KayKit Skeletons 1.1/                  ← enemy character models (.glb)
+        ├── KayKit Character Animations 1.1/       ← shared animation library (.glb)
+        ├── KayKit RPG Tools Bits 1.0/             ← 3D tool props (.gltf); NO icon PNGs
+        ├── KayKit Halloween Bits 1.0/             ← gravestones, pumpkins (.gltf)
+        ├── KayKit Furniture Bits 1.0/             ← tavern interior props
+        ├── KayKit Forest Nature Pack 1.0/         ← ambient nature decoration
+        ├── KayKit City Builder Bits 1.0/          ← road tiles, market props
+        ├── KayKit Dungeon Remastered 1.1/         ← mine interior subscene
+        ├── KayKit Mystery Monthly Series 4/       ← first merchant character
+        └── KayKit Mystery Monthly Series 5/       ← second merchant character
 ```
+
+> **Asset format note:** The Medieval Hexagon Pack, Resource Bits, Halloween Bits, RPG Tools Bits,
+> Furniture Bits, Forest Nature Pack, City Builder Bits, and Dungeon Remastered packs use **`.gltf` + `.bin`**
+> pairs (not `.glb`). Only the Adventurers, Skeletons, and Character Animations packs use **`.glb`** format.
+> All paths in `AssetRegistry.gd` must use the correct extension for each pack.
 
 ---
 
@@ -321,6 +342,9 @@ signal skeleton_reached_center()
 signal wave_cleared(wave_number: int, survivors: int, losses: int)
 signal siege_wave_started()
 
+# Great Hall
+signal great_hall_completed()
+
 # UI
 signal tooltip_requested(data: Dictionary)
 signal merchant_arrived(merchant_data: Dictionary)
@@ -333,83 +357,120 @@ extends Node
 
 # All asset references as string keys
 # Paths are relative to res://assets/kaykit/
-# Claude Code: populate these with actual filenames from the asset tree
+# IMPORTANT: Some packs use .gltf+.bin (Medieval Hexagon, Resource Bits, Halloween,
+# RPG Tools, Furniture, Forest Nature, City Builder, Dungeon). Others use .glb
+# (Adventurers, Skeletons, Character Animations). Use the correct extension.
 
 const MESHES: Dictionary = {
-  # Terrain tiles
-  "tile_grass":           "medieval_hexagon/tiles/hex_grass.glb",
-  "tile_forest":          "medieval_hexagon/tiles/hex_forest.glb",
-  "tile_mountain":        "medieval_hexagon/tiles/hex_mountain.glb",
-  "tile_water":           "medieval_hexagon/tiles/hex_water.glb",
-  "tile_road":            "medieval_hexagon/tiles/hex_road.glb",
-  "tile_coast":           "medieval_hexagon/tiles/hex_coast.glb",
+  # --- Terrain tiles (Medieval Hexagon Pack — .gltf) ---
+  "tile_grass":           "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/base/hex_grass.gltf",
+  "tile_grass_sloped_low":"KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/base/hex_grass_sloped_low.gltf",
+  "tile_grass_sloped_high":"KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/base/hex_grass_sloped_high.gltf",
+  "tile_water":           "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/base/hex_water.gltf",
+  "tile_transition":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/base/hex_transition.gltf",
+  "tile_road_A":          "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/roads/hex_road_A.gltf",
+  "tile_coast_A":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/coast/hex_coast_A.gltf",
+  "tile_river_A":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/tiles/rivers/hex_river_A.gltf",
 
-  # Buildings (green = tier 1)
-  "building_lumbermill":  "medieval_hexagon/buildings/lumbermill_green.glb",
-  "building_mine":        "medieval_hexagon/buildings/mine_green.glb",
-  "building_farm":        "medieval_hexagon/buildings/farm_green.glb",
-  "building_well":        "medieval_hexagon/buildings/well.glb",
-  "building_blacksmith":  "medieval_hexagon/buildings/blacksmith_green.glb",
-  "building_barracks":    "medieval_hexagon/buildings/barracks_green.glb",
-  "building_archery":     "medieval_hexagon/buildings/archery_range_green.glb",
-  "building_church":      "medieval_hexagon/buildings/church_green.glb",
-  "building_tavern":      "medieval_hexagon/buildings/tavern_green.glb",
-  "building_market":      "medieval_hexagon/buildings/market_green.glb",
-  "building_windmill":    "medieval_hexagon/buildings/windmill_green.glb",
-  "building_great_hall":  "medieval_hexagon/buildings/castle_green.glb",
+  # --- Buildings, green = tier 1 (Medieval Hexagon Pack — .gltf) ---
+  "building_lumbermill":  "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_lumbermill_green.gltf",
+  "building_mine":        "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_mine_green.gltf",
+  "building_workshop":    "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_workshop_green.gltf",
+  "building_well":        "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_well_green.gltf",
+  "building_blacksmith":  "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_blacksmith_green.gltf",
+  "building_barracks":    "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_barracks_green.gltf",
+  "building_archery":     "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_archeryrange_green.gltf",
+  "building_church":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_church_green.gltf",
+  "building_tavern":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_tavern_green.gltf",
+  "building_market":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_market_green.gltf",
+  "building_windmill":    "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_windmill_green.gltf",
+  "building_great_hall":  "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_castle_green.gltf",
+  "building_home_A":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_home_A_green.gltf",
+  "building_home_B":      "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_home_B_green.gltf",
+  "building_watchtower":  "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_watchtower_green.gltf",
+  "building_watermill":   "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/buildings/green/building_watermill_green.gltf",
 
-  # Units
-  "unit_farmer":          "adventurers/farmer.glb",
-  "unit_lumberjack":      "adventurers/lumberjack.glb",
-  "unit_miner":           "adventurers/miner.glb",
-  "unit_knight":          "adventurers/knight.glb",
-  "unit_archer":          "adventurers/archer.glb",
-  "unit_mage":            "adventurers/mage.glb",
-  "unit_skeleton":        "skeletons/skeleton.glb",
-  "unit_skeleton_soldier":"skeletons/skeleton_soldier.glb",
-  "unit_skeleton_archer": "skeletons/skeleton_archer.glb",
-  "unit_skeleton_champ":  "skeletons/skeleton_champion.glb",
-  "unit_skeleton_king":   "skeletons/skeleton_king.glb",
+  # --- Adventurer units (Adventurers 2.0 — .glb) ---
+  # Note: No farmer/lumberjack/miner models exist. We repurpose available characters:
+  #   Farmer → Engineer, Lumberjack → Barbarian, Miner → Rogue, Archer → Ranger
+  "unit_farmer":          "KayKit Adventurers 2.0/Characters/gltf/Engineer.glb",
+  "unit_lumberjack":      "KayKit Adventurers 2.0/Characters/gltf/Barbarian.glb",
+  "unit_miner":           "KayKit Adventurers 2.0/Characters/gltf/Rogue.glb",
+  "unit_knight":          "KayKit Adventurers 2.0/Characters/gltf/Knight.glb",
+  "unit_archer":          "KayKit Adventurers 2.0/Characters/gltf/Ranger.glb",
+  "unit_mage":            "KayKit Adventurers 2.0/Characters/gltf/Mage.glb",
 
-  # Resources (world props)
-  "resource_wood":        "resource_bits/log_stack.glb",
-  "resource_stone":       "resource_bits/stone_pile.glb",
-  "resource_iron":        "resource_bits/iron_ingot.glb",
-  "resource_food":        "resource_bits/food_basket.glb",
-  "resource_gold":        "resource_bits/gold_coins.glb",
-  "resource_textiles":    "resource_bits/textile_bolt.glb",
+  # --- Skeleton units (Skeletons 1.1 — .glb) ---
+  # Mapping: Basic → Skeleton_Minion, Soldier → Skeleton_Warrior,
+  #          Archer → Skeleton_Rogue, Champion → Skeleton_Golem, King → Necromancer
+  "unit_skeleton":        "KayKit Skeletons 1.1/characters/gltf/Skeleton_Minion.glb",
+  "unit_skeleton_soldier":"KayKit Skeletons 1.1/characters/gltf/Skeleton_Warrior.glb",
+  "unit_skeleton_archer": "KayKit Skeletons 1.1/characters/gltf/Skeleton_Rogue.glb",
+  "unit_skeleton_champ":  "KayKit Skeletons 1.1/characters/gltf/Skeleton_Golem.glb",
+  "unit_skeleton_king":   "KayKit Skeletons 1.1/characters/gltf/Necromancer.glb",
 
-  # Halloween props
-  "prop_gravestone":      "halloween_bits/gravestone.glb",
-  "prop_gravestone_cross":"halloween_bits/gravestone_cross.glb",
-  "prop_lantern":         "halloween_bits/jack_o_lantern.glb",
+  # --- Resource world props (Resource Bits 1.0 — .gltf) ---
+  "resource_wood":        "KayKit Resource Bits 1.0/Assets/gltf/Wood_Log_Stack.gltf",
+  "resource_stone":       "KayKit Resource Bits 1.0/Assets/gltf/Stone_Bricks_Stack_Small.gltf",
+  "resource_iron":        "KayKit Resource Bits 1.0/Assets/gltf/Iron_Bar.gltf",
+  "resource_food":        "KayKit Resource Bits 1.0/Assets/gltf/Food_Basket_A_Berries.gltf",
+  "resource_gold":        "KayKit Resource Bits 1.0/Assets/gltf/Money_Coins_Stack_Small.gltf",
+  "resource_textiles":    "KayKit Resource Bits 1.0/Assets/gltf/Textiles_Stack_Small.gltf",
 
-  # Nature decorations
-  "decor_tree_pine":      "forest_nature/tree_pine.glb",
-  "decor_tree_oak":       "forest_nature/tree_oak.glb",
-  "decor_rock_large":     "forest_nature/rock_large.glb",
-  "decor_mushroom":       "forest_nature/mushroom.glb",
+  # --- Halloween props (Halloween Bits 1.0 — .gltf) ---
+  "prop_gravestone":      "KayKit Halloween Bits 1.0/Assets/gltf/gravestone.gltf",
+  "prop_grave_A":         "KayKit Halloween Bits 1.0/Assets/gltf/grave_A.gltf",
+  "prop_grave_B":         "KayKit Halloween Bits 1.0/Assets/gltf/grave_B.gltf",
+  "prop_lantern":         "KayKit Halloween Bits 1.0/Assets/gltf/pumpkin_orange_jackolantern.gltf",
 
-  # UI icons (RPG Tools Bits — used as Texture in Control nodes)
-  "icon_wood":            "rpg_tools_bits/icons/wood.png",
-  "icon_stone":           "rpg_tools_bits/icons/stone.png",
-  "icon_iron":            "rpg_tools_bits/icons/iron.png",
-  "icon_food":            "rpg_tools_bits/icons/food.png",
-  "icon_gold":            "rpg_tools_bits/icons/gold.png",
-  "icon_skull":           "rpg_tools_bits/icons/skull.png",
-  "icon_heart":           "rpg_tools_bits/icons/heart.png",
-  "icon_sword":           "rpg_tools_bits/icons/sword.png",
+  # --- Nature decorations (Medieval Hexagon Pack — .gltf) ---
+  "decor_tree_A":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/tree_single_A.gltf",
+  "decor_tree_B":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/tree_single_B.gltf",
+  "decor_trees_large":    "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/trees_A_large.gltf",
+  "decor_rock_A":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/rock_single_A.gltf",
+  "decor_mountain_A":     "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/mountain_A.gltf",
+  "decor_hills_A":        "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/nature/hills_A.gltf",
+
+  # --- Decoration props (Medieval Hexagon Pack — .gltf) ---
+  "prop_barrel":          "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/props/barrel.gltf",
+  "prop_crate":           "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/props/crate_A_big.gltf",
+  "prop_haybale":         "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/props/haybale.gltf",
+  "prop_resource_lumber": "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/props/resource_lumber.gltf",
+  "prop_resource_stone":  "KayKit Medieval Hexagon Pack 1.0.1/Assets/gltf/decoration/props/resource_stone.gltf",
+}
+
+# --- HUD Icons ---
+# The RPG Tools Bits pack does NOT contain 2D icon PNGs — it contains 3D .gltf tool
+# models (anvil, hammer, pickaxe, etc.) and only 4 texture PNGs (blueprint, map, texture).
+# For HUD resource icons, use one of these approaches:
+#   Option A: Render Resource Bits 3D models to sprite sheet at build time
+#   Option B: Create simple procedural icons using Godot's draw_* methods
+#   Option C: Use the Resource Bits .gltf models in SubViewport → ViewportTexture
+#   Option D: Source a separate 2D icon pack (e.g., free game-icons.net SVGs)
+const HUD_ICONS: Dictionary = {
+  # TODO: Populate after choosing icon strategy. Example using SubViewport approach:
+  # "icon_wood":  prerendered from "KayKit Resource Bits 1.0/Assets/gltf/Wood_Log_Stack.gltf"
+  # "icon_stone": prerendered from "KayKit Resource Bits 1.0/Assets/gltf/Stone_Bricks_Stack_Small.gltf"
+  # "icon_iron":  prerendered from "KayKit Resource Bits 1.0/Assets/gltf/Iron_Bar.gltf"
+  # "icon_food":  prerendered from "KayKit Resource Bits 1.0/Assets/gltf/Food_Basket_A_Berries.gltf"
+  # "icon_gold":  prerendered from "KayKit Resource Bits 1.0/Assets/gltf/Money_Coins_Stack_Small.gltf"
+  # "icon_skull": render from skeleton model head or use a simple drawn icon
+  # "icon_heart": draw procedurally or source externally
+  # "icon_sword": prerendered from "KayKit RPG Tools Bits 1.0/Assets/gltf/knife.gltf"
 }
 
 static func mesh_path(key: String) -> String:
   assert(key in MESHES, "AssetRegistry: unknown key '%s'" % key)
   return "res://assets/kaykit/" + MESHES[key]
 
-static func load_mesh(key: String) -> Mesh:
+static func load_scene(key: String) -> PackedScene:
+  # .gltf and .glb files both import as PackedScene in Godot 4
   return load(mesh_path(key))
 
-static func load_scene(key: String) -> PackedScene:
-  return load(mesh_path(key))
+static func instance_mesh(key: String) -> Node3D:
+  # Convenience: load the scene and instantiate it as a Node3D
+  var scene: PackedScene = load_scene(key)
+  return scene.instantiate() as Node3D
 ```
 
 ### `HexGrid.gd` (Pure Math, No Nodes)
@@ -443,9 +504,50 @@ static func astar_path(start: Vector2i, end: Vector2i,
     "cost": { "wood": 40 },
     "output": { "resource": "wood", "per_day": 30 },
     "requires_adjacent_terrain": "tile_forest",
+    "requires_nearby_building": null,
     "max_workers": 2,
     "hp": 60,
     "worker_bonus": { "unit": "lumberjack", "multiplier": 1.25 }
+  },
+  "farm": {
+    "display_name": "Farm",
+    "description": "Grows food to feed your adventurers.",
+    "mesh_key": "building_home_A",
+    "tier": 1,
+    "cost": { "wood": 30 },
+    "output": { "resource": "food", "per_day": 20 },
+    "requires_adjacent_terrain": null,
+    "requires_nearby_building": { "building": "well", "max_distance": 2 },
+    "max_workers": 2,
+    "hp": 40,
+    "worker_bonus": { "unit": "farmer", "multiplier": 1.20 }
+  },
+  "mine": {
+    "display_name": "Mine",
+    "description": "Extracts stone and iron from the mountains.",
+    "mesh_key": "building_mine",
+    "tier": 1,
+    "cost": { "wood": 60, "stone": 20 },
+    "output": { "resource": "stone", "per_day": 20 },
+    "conditional_output": { "resource": "iron", "per_day": 10, "unlock_day": 3 },
+    "requires_adjacent_terrain": "tile_mountain",
+    "requires_nearby_building": null,
+    "max_workers": 2,
+    "hp": 80,
+    "worker_bonus": { "unit": "miner", "multiplier": 1.25 }
+  },
+  "weaver": {
+    "display_name": "Weaver",
+    "description": "Produces textiles from windmill output.",
+    "mesh_key": "building_workshop",
+    "tier": 1,
+    "cost": { "wood": 40, "gold": 10 },
+    "output": { "resource": "textiles", "per_day": 10 },
+    "requires_adjacent_terrain": null,
+    "requires_nearby_building": { "building": "windmill", "max_distance": 1 },
+    "max_workers": 2,
+    "hp": 40,
+    "worker_bonus": null
   },
   "barracks": {
     "display_name": "Barracks",
@@ -457,11 +559,17 @@ static func astar_path(start: Vector2i, end: Vector2i,
     "night_behavior": "spawn_defenders",
     "defender_type": "unit_knight",
     "defender_count": 2,
+    "requires_adjacent_terrain": null,
+    "requires_nearby_building": null,
     "max_workers": 4,
     "hp": 80
   }
 }
 ```
+
+> **Schema notes:**
+> - `requires_nearby_building`: `null` or `{ "building": "<id>", "max_distance": <int> }` — enforces proximity to another building (e.g., Farm needs Well within 2 hexes, Weaver needs Windmill adjacent).
+> - `conditional_output`: `null` or `{ "resource": "<type>", "per_day": <int>, "unlock_day": <int> }` — secondary resource output that unlocks on a specific day (e.g., Mine produces iron starting day 3).
 
 ### `waves.json`
 ```json
@@ -493,115 +601,176 @@ static func astar_path(start: Vector2i, end: Vector2i,
 Since you have the assets downloaded, Claude Code can enumerate your actual file tree. Use this as the **first prompt in every session:**
 
 ```
-Read the directory tree under res://assets/kaykit/ recursively and list all .glb 
-and .png files grouped by subfolder. Then open AssetRegistry.gd and fill in any 
-MESHES entries that have placeholder comments with the correct relative paths.
+Read the directory tree under res://assets/kaykit/ recursively and list all .gltf
+and .glb files grouped by subfolder. Then open AssetRegistry.gd and verify all
+MESHES entries point to files that actually exist on disk. Fix any broken paths.
 ```
 
-This means the asset mapping below uses **descriptive names** — Claude Code fills in the exact filenames from your disk. Here is the authoritative mapping of game system → pack → what to look for:
+> **Format reminder:** Most packs use `.gltf` + `.bin` pairs. Only Adventurers 2.0,
+> Skeletons 1.1, and Character Animations 1.1 use `.glb` format.
+
+The asset mapping below uses **verified filenames** from the actual directory tree. Here is the authoritative mapping of game system → pack → exact files:
 
 ---
 
 ## Medieval Hexagon Pack
-**Location:** `assets/kaykit/medieval_hexagon/`
+**Location:** `assets/kaykit/KayKit Medieval Hexagon Pack 1.0.1/`
+**Format:** `.gltf` + `.bin` pairs (NOT `.glb`)
 
-| Game Need | What to Look For |
+### Terrain Tiles (`Assets/gltf/tiles/`)
+
+| Game Need | Exact File |
 |---|---|
-| Grass terrain tiles | Files named `hex_grass*` or `tile_grass*` |
-| Forest terrain tiles | Files named `hex_forest*` or `tile_forest*` |
-| Mountain terrain tiles | Files named `hex_mountain*` or `hex_rock*` |
-| Water terrain tiles | Files named `hex_water*` or `hex_ocean*` |
-| Coast tiles | Files named `hex_coast*` or `hex_shore*` |
-| Road tiles | Files named `hex_road*` or `hex_path*` |
-| River tiles | Files named `hex_river*` |
-| Lumbermill | `lumbermill*` — 4 variants for tier colors |
-| Mine | `mine*` |
-| Farm | `farm*` |
-| Well | `well*` |
-| Blacksmith | `blacksmith*` |
-| Barracks | `barracks*` |
-| Archery Range | `archery*` or `tower*` |
-| Church | `church*` |
-| Tavern | `tavern*` |
-| Market | `market*` |
-| Windmill | `windmill*` — should have animated blade variant |
-| Castle/Great Hall | `castle*` — use largest variant for Great Hall |
-| Trees (hex props) | `tree*` in nature/decoration subfolder |
-| Rocks (hex props) | `rock*` or `mountain*` in decoration |
-| Clouds | `cloud*` — use as ambient sky props |
-| Units (if included in your tier) | `unit_*` or character models in units subfolder |
+| Grass terrain | `tiles/base/hex_grass.gltf` |
+| Grass (sloped low) | `tiles/base/hex_grass_sloped_low.gltf` |
+| Grass (sloped high) | `tiles/base/hex_grass_sloped_high.gltf` |
+| Water terrain | `tiles/base/hex_water.gltf` |
+| Transition tile | `tiles/base/hex_transition.gltf` |
+| Coast (5 variants) | `tiles/coast/hex_coast_A.gltf` through `hex_coast_E.gltf` |
+| Road (13 variants) | `tiles/roads/hex_road_A.gltf` through `hex_road_M.gltf` |
+| River (12+ variants) | `tiles/rivers/hex_river_A.gltf` through `hex_river_L.gltf` + crossings |
+
+> **Note:** There are no dedicated "forest" or "mountain" terrain tiles. Forest tiles are
+> represented by placing `hex_grass.gltf` with tree decorations on top. Mountain tiles use
+> `hex_grass.gltf` (or `hex_grass_sloped_high.gltf`) with mountain decorations from
+> `decoration/nature/mountain_A.gltf`.
+
+### Buildings (`Assets/gltf/buildings/green/`) — Tier 1
+
+| Game Building | Exact File |
+|---|---|
+| Lumbermill | `building_lumbermill_green.gltf` |
+| Mine | `building_mine_green.gltf` |
+| Farm | **No farm model** — use `building_home_A_green.gltf` |
+| Well | `building_well_green.gltf` |
+| Blacksmith | `building_blacksmith_green.gltf` |
+| Barracks | `building_barracks_green.gltf` |
+| Archery Range | `building_archeryrange_green.gltf` |
+| Church | `building_church_green.gltf` |
+| Tavern | `building_tavern_green.gltf` |
+| Market | `building_market_green.gltf` |
+| Windmill | `building_windmill_green.gltf` |
+| Weaver | **No weaver model** — use `building_workshop_green.gltf` |
+| Great Hall | `building_castle_green.gltf` |
+
+Other buildings in the pack (available for future use): `docks`, `home_B`, `shipyard`, `shrine`, `stables`, `tent`, `tower_A`, `tower_B`, `tower_base`, `tower_cannon`, `tower_catapult`, `townhall`, `watchtower`, `watermill`.
+
+### Decorations (`Assets/gltf/decoration/`)
+
+| Game Need | Exact File |
+|---|---|
+| Single tree (harvestable) | `nature/tree_single_A.gltf`, `tree_single_B.gltf` |
+| Tree stump (depleted) | `nature/tree_single_A_cut.gltf`, `tree_single_B_cut.gltf` |
+| Tree clusters | `nature/trees_A_large.gltf`, `trees_B_large.gltf` (+ medium, small) |
+| Hills (forest terrain) | `nature/hills_A.gltf`, `hills_A_trees.gltf` (+ B, C variants) |
+| Mountains | `nature/mountain_A.gltf`, `mountain_A_grass.gltf` (+ B, C variants) |
+| Rocks | `nature/rock_single_A.gltf` through `rock_single_E.gltf` |
+| Clouds | `nature/cloud_big.gltf`, `cloud_small.gltf` |
+| Barrel prop | `props/barrel.gltf` |
+| Resource lumber pile | `props/resource_lumber.gltf` |
+| Resource stone pile | `props/resource_stone.gltf` |
+| Haybale | `props/haybale.gltf` |
 
 **Notes:**
-- The 4 color variants (blue/red/green/yellow) map to upgrade tiers. Green = tier 1, Blue = tier 2, Red = tier 3, Yellow = tier 4. Only green is needed for the base game.
-- Pre-assembled hex tiles (hill + tree combos) can be used as non-buildable decorative tiles on the map edges.
+- The 4 color variants (blue/red/green/yellow) exist for all buildings. Green = tier 1, Blue = tier 2, Red = tier 3, Yellow = tier 4. Only green is needed for the base game.
+- The pack also includes colored units (swords, shields, horses, etc.) in `units/` subfolders — these are hex-game pieces, not character models.
 - Windmill blades may be a separate mesh — if so, animate them with a rotation tween in `Building.gd`.
 
 ---
 
 ## Resource Bits Pack
-**Location:** `assets/kaykit/resource_bits/`
+**Location:** `assets/kaykit/KayKit Resource Bits 1.0/`
+**Format:** `.gltf` + `.bin` pairs (NOT `.glb`)
 
-| Resource | Look For | Used As |
+| Resource | Exact File | Used As |
 |---|---|---|
-| Wood | `log*`, `wood*`, `plank*` | World prop on lumbermill tile, HUD icon |
-| Stone | `stone*`, `rock*` | World prop on mine tile |
-| Iron | `iron*`, `ingot*` | World prop on mine tile (day 3+) |
-| Food | `food*`, `basket*`, `grain*` | World prop on farm tile |
-| Gold | `gold*`, `coin*` | World prop floating above market |
-| Textiles | `textile*`, `cloth*`, `fabric*` | World prop on windmill tile |
-| Containers (Extra tier) | `crate*`, `barrel*`, `chest*` | Decoration in tavern interior |
-| Gems (Extra tier) | `gem*`, `crystal*` | Relic items in merchant menu |
-| Money (Extra tier) | `bag*`, `purse*` | Merchant trade UI |
+| Wood | `Wood_Log_Stack.gltf` (also: `Wood_Log_A/B`, `Wood_Plank_*`, `Wood_Planks_Stack_*`) | World prop on lumbermill tile |
+| Stone | `Stone_Bricks_Stack_Small.gltf` (also: `Stone_Brick`, `Stone_Chunks_*`, `Stone_Bricks_Stack_*`) | World prop on mine tile |
+| Iron | `Iron_Bar.gltf` (also: `Iron_Bars`, `Iron_Bars_Stack_*`, `Iron_Nugget_*`) | World prop on mine tile (day 3+) |
+| Food | `Food_Basket_A_Berries.gltf` (also: `Food_Apple_*`, `Food_Barrel_*`, `Food_Crate_*`, `Food_Cheese`, `Food_Flour`) | World prop on farm tile |
+| Gold | `Money_Coins_Stack_Small.gltf` (also: `Gold_Bar`, `Gold_Bars_Stack_*`, `Money_Pile_*`) | World prop floating above market |
+| Textiles | `Textiles_Stack_Small.gltf` (also: `Textiles_A/B/C`, `Textiles_Stack_Large*`) | World prop on weaver tile |
+
+**Additional props available:** Copper variants (`Copper_*`), Silver variants (`Silver_*`), Gems (`Gems_*`), Fuel (`Fuel_*`), Parts/Cogs (`Parts_*`), Pallets (`Pallet_*`).
 
 **In-game usage:** Resource world props are instanced at 0.3× scale and placed on the tile using `ResourceNode.tscn`. They scale up on collection (tween to 0) as a feedback animation.
 
 ---
 
 ## Character Pack Adventurers
-**Location:** `assets/kaykit/adventurers/`
+**Location:** `assets/kaykit/KayKit Adventurers 2.0/`
+**Format:** `.glb`
 
-| Unit | Look For |
-|---|---|
-| Farmer | `farmer*`, or generic peasant with farming clothes |
-| Lumberjack | `lumberjack*`, or character with axe prop |
-| Miner | `miner*`, or character with pickaxe prop |
-| Knight | `knight*`, `warrior*` |
-| Archer | `archer*`, `ranger*` |
-| Mage | `mage*`, `wizard*`, `sorcerer*` |
-| Merchant (if present) | `merchant*`, `trader*` |
+| Game Unit | Exact Model File | Notes |
+|---|---|---|
+| Farmer | `Characters/gltf/Engineer.glb` | Repurposed: no farmer model exists |
+| Lumberjack | `Characters/gltf/Barbarian.glb` | Repurposed: strong build fits lumberjack |
+| Miner | `Characters/gltf/Rogue.glb` | Repurposed: compact build fits miner |
+| Knight | `Characters/gltf/Knight.glb` | Direct match |
+| Archer | `Characters/gltf/Ranger.glb` | Direct match (no "Archer" model) |
+| Mage | `Characters/gltf/Mage.glb` | Direct match |
 
-**Animation setup:** All adventurers use `Character Animations` pack. In Godot 4, import the character .glb and add an `AnimationTree` node pointing to `character_animations/animations.glb`. States: `idle`, `walk`, `attack`, `death`, `work` (if available — otherwise use idle).
+**Other available models:** `Barbarian_Large.glb`, `Druid.glb`, `Rogue_Hooded.glb` — usable as merchant NPCs, quest givers, or alternate unit skins.
+
+**Pack also includes animations:** `Animations/gltf/Rig_Medium/Rig_Medium_General.glb` and `Rig_Medium_MovementBasic.glb` (plus Large rig variants).
+
+**Animation setup:** All adventurers use `Character Animations 1.1` pack for shared animations. In Godot 4, import the character `.glb` and add an `AnimationTree` node. States: `idle`, `walk`, `attack`, `death`, `work` (if available — otherwise use idle).
 
 ---
 
 ## Character Pack Skeletons
-**Location:** `assets/kaykit/skeletons/`
+**Location:** `assets/kaykit/KayKit Skeletons 1.1/`
+**Format:** `.glb`
 
-| Unit | Look For |
-|---|---|
-| Basic Skeleton | `skeleton*` base model |
-| Skeleton Soldier | `skeleton_soldier*`, `skeleton_warrior*` |
-| Skeleton Archer | `skeleton_archer*`, `skeleton_ranger*` |
-| Skeleton Champion | `skeleton_champion*`, `skeleton_heavy*` |
-| Skeleton King | `skeleton_king*`, `skeleton_boss*` |
+| Game Unit | Exact Model File | Notes |
+|---|---|---|
+| Skeleton Basic | `characters/gltf/Skeleton_Minion.glb` | Weakest skeleton type |
+| Skeleton Soldier | `characters/gltf/Skeleton_Warrior.glb` | Armored melee unit |
+| Skeleton Archer | `characters/gltf/Skeleton_Rogue.glb` | Repurposed as ranged attacker |
+| Skeleton Champion | `characters/gltf/Skeleton_Golem.glb` | Large, heavy hitter |
+| Skeleton King | `characters/gltf/Necromancer.glb` | Boss unit for siege night |
 
-**Same animation setup** as adventurers — the Character Animations pack is designed to work with all KayKit character models.
+**Other available model:** `Skeleton_Mage.glb` — could be used as an additional skeleton type (e.g., a skeleton that debuffs adventurers or heals other skeletons).
+
+**Pack also includes animations:** `Animations/gltf/Rig_Medium/` and `Rig_Large/` variants.
+
+**Same animation setup** as adventurers — the Character Animations 1.1 pack is designed to work with all KayKit character models.
 
 ---
 
 ## Character Animations Pack
-**Location:** `assets/kaykit/character_animations/`
+**Location:** `assets/kaykit/KayKit Character Animations 1.1/`
+**Format:** `.glb`
 
-| Animation | In-Game Use |
+The pack contains animation libraries split by rig size and category:
+
+| File | Contents |
 |---|---|
-| `idle` | Standing in assigned building during day; standing at night |
-| `walk` / `run` | Moving between tiles |
-| `attack` | Combat against enemy |
-| `death` | Play on 0 HP, freeze last frame, remove after 2s |
-| `work` (if exists) | Worker inside production building |
-| `cheer` (if exists) | Dawn phase celebration |
+| `Animations/gltf/Rig_Medium/Rig_Medium_General.glb` | Idle, interact, emotes |
+| `Animations/gltf/Rig_Medium/Rig_Medium_MovementBasic.glb` | Walk, run, strafe |
+| `Animations/gltf/Rig_Medium/Rig_Medium_MovementAdvanced.glb` | Jump, dodge, climb |
+| `Animations/gltf/Rig_Medium/Rig_Medium_CombatMelee.glb` | Melee attack, block, hit reaction |
+| `Animations/gltf/Rig_Medium/Rig_Medium_CombatRanged.glb` | Bow draw, fire, reload |
+| `Animations/gltf/Rig_Medium/Rig_Medium_Simulation.glb` | Work, carry, farming-type actions |
+| `Animations/gltf/Rig_Medium/Rig_Medium_Special.glb` | Death, cheer, special actions |
+| `Animations/gltf/Rig_Medium/Rig_Medium_Tools.glb` | Tool-using animations |
+| `Animations/gltf/Rig_Large/Rig_Large_*.glb` | Same categories for Large rig (Golem, Barbarian_Large) |
 
-**Claude Code setup note:** The animation library is a shared `.glb` or `.res` file. In `Unit.gd`, reference it via:
+**In-game animation mapping:**
+
+| State | Source File | Notes |
+|---|---|---|
+| idle | `Rig_Medium_General.glb` | Standing in assigned building during day |
+| walk / run | `Rig_Medium_MovementBasic.glb` | Moving between tiles |
+| attack (melee) | `Rig_Medium_CombatMelee.glb` | Knight, Lumberjack combat |
+| attack (ranged) | `Rig_Medium_CombatRanged.glb` | Archer combat |
+| death | `Rig_Medium_Special.glb` | Play on 0 HP, freeze last frame, remove after 2s |
+| work | `Rig_Medium_Simulation.glb` | Worker inside production building |
+| cheer | `Rig_Medium_Special.glb` | Dawn phase celebration |
+
+**Mannequin characters** are also included: `Mannequin Character/characters/Mannequin_Medium.glb` and `Mannequin_Large.glb` — useful for testing animations without loading full character models.
+
+**Claude Code setup note:** The animation library is a shared `.glb` file. In `Unit.gd`, reference it via:
 ```gdscript
 @onready var animation_tree: AnimationTree = $AnimationTree
 # AnimationTree → AnimationPlayer → imported animation library
@@ -610,41 +779,56 @@ This means the asset mapping below uses **descriptive names** — Claude Code fi
 ---
 
 ## RPG Tools Bits
-**Location:** `assets/kaykit/rpg_tools_bits/`
+**Location:** `assets/kaykit/KayKit RPG Tools Bits 1.0/`
+**Format:** `.gltf` + `.bin` pairs (NOT `.glb`)
 
-All used as **2D TextureRect icons** inside Control nodes — not as 3D meshes.
+> **IMPORTANT:** This pack contains **3D tool models**, NOT 2D icon PNGs. There are no
+> resource icon sprites (wood, stone, food, etc.) in this pack. The only PNG files are
+> texture atlases: `tools_bits_texture.png`, `tools_bits_blueprint.png`, `tools_bits_map.png`,
+> `tools_bits_map_empty.png`.
 
-| UI Element | Look For |
-|---|---|
-| Resource icons (HUD) | `wood.png`, `stone.png`, `iron.png`, `food.png`, `gold.png` |
-| Skull (night/death) | `skull.png`, `death.png` |
-| Heart (settlement HP) | `heart.png`, `health.png` |
-| Sword (attack) | `sword.png`, `attack.png` |
-| Shield (defense) | `shield.png` |
-| Star (upgrade) | `star.png`, `upgrade.png` |
-| Scroll (quest/info) | `scroll.png`, `quest.png` |
-| Relic slots | `slot_empty.png`, `slot_filled.png` |
-| Day/Night icons | `sun.png`, `moon.png` |
+**Available 3D tool models** (61 total in `Assets/gltf/`):
+- Crafting: `anvil.gltf`, `hammer.gltf`, `mallet.gltf`, `tongs.gltf`, `grindstone.gltf`
+- Mining/Gathering: `pickaxe.gltf`, `shovel.gltf`, `axe.gltf`, `saw.gltf`, `chisel.gltf`
+- Exploration: `lantern.gltf`, `torch.gltf`, `torch_burnt.gltf`, `compass_base.gltf`, `magnifying_glass.gltf`
+- Documents: `map.gltf`, `map_empty.gltf`, `map_rolled.gltf`, `journal_closed.gltf`, `journal_open.gltf`, `blueprint.gltf`
+- Keys/Locks: `key_A/B/C.gltf`, `lock_A/B/C.gltf`, `lockpick_A/B/C/D.gltf`, `lockpick_set.gltf`
+- Fishing: `fishing_rod.gltf`, `fishing_hook_A/B.gltf`, `fishing_tacklebox.gltf`
+- Other: `knife.gltf`, `scissors.gltf`, `rope_bundle_A/B.gltf`, `wrench_A/B.gltf`, `screwdriver_*`
+
+**For HUD icons, use one of these approaches:**
+1. **SubViewport rendering:** Render Resource Bits 3D models (`Wood_Log_Stack.gltf`, etc.) into `ViewportTexture` at build time and save as `.png` sprites
+2. **Procedural icons:** Use Godot's `draw_*` methods in a custom Control to draw simple resource icons
+3. **External icon pack:** Source free 2D icons (e.g., game-icons.net CC-BY SVGs) and place in `res://ui/icons/`
+4. **3D-in-UI:** Use small `SubViewportContainer` nodes in the HUD that each render a rotating 3D resource model
 
 ---
 
 ## Halloween Bits
-**Location:** `assets/kaykit/halloween_bits/`
+**Location:** `assets/kaykit/KayKit Halloween Bits 1.0/`
+**Format:** `.gltf` + `.bin` pairs (NOT `.glb`)
 
-| Use | Look For |
+| Use | Exact File(s) |
 |---|---|
-| Dusk gravestones (rise from outer ring) | `gravestone*`, `tombstone*` |
-| Jack-o-lanterns (night atmosphere) | `lantern*`, `pumpkin*`, `jack*` |
-| Corrupted ground tiles | `corrupted*`, `dark_ground*`, `hex_corrupted*` |
-| Bones/skulls (decoration after battle) | `bone*`, `skull*` |
-| Creepy trees | `dead_tree*`, `creepy_tree*` |
+| Dusk gravestones | `gravestone.gltf`, `grave_A.gltf`, `grave_B.gltf`, `gravemarker_A.gltf`, `gravemarker_B.gltf` |
+| Destroyed grave variant | `grave_A_destroyed.gltf` |
+| Grave dirt tile | `floor_dirt_grave.gltf` |
+| Jack-o-lanterns | `pumpkin_orange_jackolantern.gltf`, `pumpkin_yellow_jackolantern.gltf` |
+| Pumpkins (decoration) | `pumpkin_orange.gltf`, `pumpkin_orange_small.gltf`, `pumpkin_yellow.gltf`, `pumpkin_yellow_small.gltf` |
+| Lanterns | `lantern_hanging.gltf`, `lantern_standing.gltf`, `post_lantern.gltf` |
+| Dead trees | `tree_dead_large.gltf`, `tree_dead_large_decorated.gltf`, `tree_dead_medium.gltf`, `tree_dead_small.gltf` |
+| Scarecrow | `scarecrow.gltf` |
+
+> **Note:** No corrupted hex tiles or bone/skull props exist in this pack. For corrupted ground,
+> use the `floor_dirt_grave.gltf` tile. For post-battle decoration, use the `grave_A_destroyed.gltf`.
 
 **Usage:** Gravestones spawn on the outermost 3 hex rings at Dusk using a Y-axis tween from -1.0 to 0.0 over 1.5 seconds. They sink back during Dawn. Jack-o-lanterns are placed statically on the outer ring tiles and become visible (via show/hide) at Dusk.
 
 ---
 
 ## Furniture Bits
-**Location:** `assets/kaykit/furniture_bits/`
+**Location:** `assets/kaykit/KayKit Furniture Bits 1.0/`
+**Format:** `.gltf` + `.bin` pairs (likely, consistent with other KayKit packs)
 
 Used exclusively in the **Tavern subscene** — an isometric "open roof" view when clicking a Tavern building.
 
@@ -656,13 +840,14 @@ Used exclusively in the **Tavern subscene** — an isometric "open roof" view wh
 | Chairs | `chair*` |
 | Shelves | `shelf*`, `bookshelf*` |
 | Candles | `candle*` |
-| Barrels | `barrel*` (complement with resource_bits barrels) |
+| Barrels | `barrel*` (complement with Medieval Hexagon `props/barrel.gltf`) |
 | Fireplace | `fireplace*`, `hearth*` |
 
 ---
 
 ## Forest Nature Pack
-**Location:** `assets/kaykit/forest_nature/`
+**Location:** `assets/kaykit/KayKit Forest Nature Pack 1.0/`
+**Format:** `.gltf` + `.bin` pairs (likely, consistent with other KayKit packs)
 
 Used as **ambient decoration** on unexplored/neutral tiles outside the player's built area. Makes the world feel wild.
 
@@ -675,27 +860,37 @@ Used as **ambient decoration** on unexplored/neutral tiles outside the player's 
 | Fallen logs | `fallen_log*`, `log*` (different from resource logs) |
 | Flowers | `flower*` (meadow tiles) |
 
+> **Note:** The Medieval Hexagon Pack also has tree/rock/mountain decorations (see above).
+> Use Forest Nature Pack for tiles far from the settlement (wilder feel) and Medieval Hexagon
+> decorations for tiles closer to or within the settlement area.
+
 **Placement rule:** When `HexMap` generates a tile of type `forest`, place 2–4 random Forest Nature Pack trees on it at slight random offsets and rotations. These are purely decorative (no gameplay function). They are removed when a building is placed on the tile.
 
 ---
 
-## Series 4 & 5 Characters
-**Location:** `assets/kaykit/series_4_5/` (or separate subfolders per series)
+## Mystery Monthly Series 4 & 5 Characters
+**Location (Series 4):** `assets/kaykit/KayKit Mystery Monthly Series 4/`
+**Location (Series 5):** `assets/kaykit/KayKit Mystery Monthly Series 5/`
+
+> **Note:** These are two separate directories, not a combined `series_4_5/` folder.
 
 Used as **merchant characters** that visit on days 4 and 6.
 
-| Role | Look For |
+| Role | Source |
 |---|---|
 | First merchant (day 4) | Any unique, non-combat character from Series 4 |
 | Second merchant (day 6) | Any unique character from Series 5, visually distinct |
 | Optional: quest giver | Any cloaked or robed character |
 
-Each merchant is a `CharacterBody3D` that walks to a road-adjacent hex, plays idle animation, and shows a floating shop icon (RPG Tools Bits `shop.png` or `merchant.png`) above their head.
+Also consider using **unused Adventurers 2.0 models** as merchants: `Druid.glb`, `Rogue_Hooded.glb`.
+
+Each merchant is a `CharacterBody3D` that walks to a road-adjacent hex, plays idle animation, and shows a floating shop icon (rendered via `SubViewportContainer` with the `cart_merchant` model from Medieval Hexagon Pack `units/neutral/cart_merchant.gltf`) above their head.
 
 ---
 
 ## City Builder Bits
-**Location:** `assets/kaykit/city_builder_bits/`
+**Location:** `assets/kaykit/KayKit City Builder Bits 1.0/`
+**Format:** `.gltf` + `.bin` pairs (likely, consistent with other KayKit packs)
 
 Supplements the Medieval Hexagon Pack for road and market infrastructure.
 
@@ -709,7 +904,8 @@ Supplements the Medieval Hexagon Pack for road and market infrastructure.
 ---
 
 ## Dungeon Pack Remastered
-**Location:** `assets/kaykit/dungeon_remastered/`
+**Location:** `assets/kaykit/KayKit Dungeon Remastered 1.1/`
+**Format:** `.gltf` + `.bin` pairs (likely, consistent with other KayKit packs)
 
 Used only for the **Mine interior subscene** — an optional click-to-open view of the mine interior showing workers animating.
 
@@ -723,7 +919,7 @@ Used only for the **Mine interior subscene** — an optional click-to-open view 
 | Mining cart | `cart*`, `minecart*` |
 | Support beams | `beam*`, `support*` |
 
-The mine subscene is a small 3×4 tile dungeon room rendered in a separate Viewport and shown as a panel when the mine building is clicked. Workers (miner units) animate inside it using the `work` animation.
+The mine subscene is a small 3×4 tile dungeon room rendered in a separate Viewport and shown as a panel when the mine building is clicked. Workers (miner units) animate inside it using the `work` animation from `Rig_Medium_Simulation.glb`.
 
 ---
 
@@ -735,14 +931,15 @@ This file goes in the project root. Claude Code reads it at the start of every s
 # Holdfast — Claude Code Project Instructions
 
 ## Project Overview
-Holdfast is a hex-based medieval settlement survival game built in Godot 4.3.
+Holdfast is a hex-based medieval settlement survival game built in Godot 4.6.
 Players build a settlement by day and defend it from skeleton waves by night.
 Win condition: Complete the Great Hall (3 days of construction) before night 10's siege.
 
 ## Tech Stack
-- Godot 4.3 (GDScript)
+- Godot 4.6 (GDScript, Forward Plus rendering)
+- Jolt Physics 3D (used for Area3D click detection and CharacterBody3D merchants)
 - KayKit 3D assets (CC0 licensed) — located in res://assets/kaykit/
-- No physics engine use — all movement is tween-based, grid-based
+- Unit/camera movement is tween-based and grid-based (no rigidbody physics)
 - No external plugins required
 
 ## Asset Rules — CRITICAL
@@ -750,6 +947,10 @@ Win condition: Complete the Great Hall (3 days of construction) before night 10'
 - ALL asset references go through AssetRegistry.gd using string keys.
 - If you need a new asset, add its key+path to AssetRegistry.gd FIRST, then use the key.
 - To discover actual filenames: read the directory tree under res://assets/kaykit/
+- **File formats vary by pack:** Most packs use `.gltf` + `.bin` pairs. Adventurers 2.0,
+  Skeletons 1.1, and Character Animations 1.1 use `.glb`. Always check the actual extension.
+- **Directory names have full KayKit names** (e.g., `KayKit Medieval Hexagon Pack 1.0.1/`,
+  NOT `medieval_hexagon/`). Use the exact directory names from disk.
 
 ## Signal Rules — CRITICAL
 - NEVER connect signals directly between systems (e.g., WaveSpawner should never import BuildingPlacer).
@@ -809,22 +1010,26 @@ Each prompt below is a **self-contained Claude Code session starter**. Paste it 
 
 ```
 We're starting Holdfast from scratch. The assets are already in res://assets/kaykit/.
+Asset directories use full KayKit names (e.g., "KayKit Medieval Hexagon Pack 1.0.1/").
+Most packs use .gltf format; only Adventurers, Skeletons, and Character Animations use .glb.
 
-Step 1: Scaffold the project structure. Create all the empty .gd files and .tscn 
-scenes listed in the architecture (CLAUDE.md has the full tree). For .tscn files, 
-create minimal valid scenes with just a Node3D root. For .gd files, add the 2-line 
+Step 1: Scaffold the project structure. Create all the empty .gd files and .tscn
+scenes listed in the architecture (CLAUDE.md has the full tree). For .tscn files,
+create minimal valid scenes with just a Node3D root. For .gd files, add the 2-line
 comment header and an empty class.
 
 Step 2: Register all autoloads in project.godot:
   GameState, AssetRegistry, SignalBus, DataLoader, ResourceManager
 
-Step 3: Read the directory tree under res://assets/kaykit/medieval_hexagon/ and 
-identify the hex terrain tile .glb files for: grass, forest, mountain, water, coast, 
-road. Fill in those entries in AssetRegistry.gd with correct paths.
+Step 3: Read the directory tree under res://assets/kaykit/KayKit Medieval Hexagon Pack 1.0.1/
+and identify the hex terrain tile .gltf files. Note: there are no dedicated "forest" or
+"mountain" tiles — these are represented by placing hex_grass.gltf with tree/mountain
+decorations on top. Fill in AssetRegistry.gd MESHES entries with correct paths using
+the full directory name and .gltf extension.
 
 Step 4: Implement HexGrid.gd (pure static functions, no Node):
   - offset_to_cube(hex: Vector2i) -> Vector3i
-  - cube_to_offset(cube: Vector3i) -> Vector2i  
+  - cube_to_offset(cube: Vector3i) -> Vector2i
   - hex_distance(a: Vector2i, b: Vector2i) -> int
   - hex_neighbors(hex: Vector2i) -> Array[Vector2i]
   - hex_ring(center: Vector2i, radius: int) -> Array[Vector2i]
@@ -833,24 +1038,30 @@ Step 4: Implement HexGrid.gd (pure static functions, no Node):
   Use "odd-r" offset layout.
 
 Step 5: Implement HexMap.tscn + MapGenerator.gd. The map is 15 columns × 12 rows.
-  Use FastNoiseLite to assign tile types:
-    noise > 0.3 → grass (60% of map)
-    noise 0.1–0.3 → forest (20%)
-    noise -0.1–0.1 → mountain (10%)
-    noise < -0.1 → water (10%)
-  For each tile, instance the correct mesh from AssetRegistry. Position using 
-  HexGrid.hex_to_world(). Store all tile data in a Dictionary: 
-  { Vector2i: { "type": String, "building": null, "units": [] } }
+  Use FastNoiseLite to assign tile types. Calibrate thresholds to achieve target
+  distribution (FastNoiseLite output is roughly gaussian in [-1, 1]):
+    noise > 0.0  → grass (60% of map) — use hex_grass.gltf
+    noise -0.3–0.0 → forest (20%) — use hex_grass.gltf + tree decorations
+    noise -0.6– -0.3 → mountain (10%) — use hex_grass_sloped_high.gltf + mountain decoration
+    noise < -0.6 → water (10%) — use hex_water.gltf
+  NOTE: Tune these thresholds empirically. FastNoiseLite distribution depends on
+  noise_type and frequency. Test with seed=0 and adjust until the map looks right.
+  For each tile, instance the correct scene from AssetRegistry using load_scene()/
+  instance_mesh(). Position using HexGrid.hex_to_world(). Store all tile data in a
+  Dictionary: { Vector2i: { "type": String, "building": null, "units": [] } }
+  For forest tiles, add 2-4 tree decorations (decor_tree_A, trees_A_large, etc.)
+  For mountain tiles, add mountain decoration (decor_mountain_A)
 
-Step 6: Implement HexTile.tscn — a Node3D with a MeshInstance3D child and an 
-  Area3D+CollisionShape for click detection. On input_event, emit 
+Step 6: Implement HexTile.tscn — a Node3D with the instanced scene as a child and an
+  Area3D+CollisionShape3D for click detection. On input_event, emit
   SignalBus.tile_clicked(hex_coord).
 
-Step 7: Create Debug.tscn with the HexMap. Print "Tile clicked: (col, row) type=X" 
+Step 7: Create Debug.tscn with the HexMap. Print "Tile clicked: (col, row) type=X"
   to output when any tile is clicked. Print all neighbor coords for each clicked tile.
 
-Done when: Running Debug.tscn shows a 15×12 hex grid with textured tiles, and 
-clicking any tile prints its coordinates and type.
+Done when: Running Debug.tscn shows a 15×12 hex grid with textured tiles (grass tiles
+with tree/mountain decorations for forest/mountain types), and clicking any tile prints
+its coordinates and type.
 ```
 
 ---
@@ -860,9 +1071,10 @@ clicking any tile prints its coordinates and type.
 ```
 Implement the complete data layer for Holdfast.
 
-Step 1: Create all JSON files in res://data/ with the full content specified in the 
+Step 1: Create all JSON files in res://data/ with the full content specified in the
 architecture document. Include at minimum:
-  - buildings.json: all 11 building types with cost, output, hp, mesh_key
+  - buildings.json: all 13 building types with cost, output, hp, mesh_key,
+    requires_adjacent_terrain, requires_nearby_building, conditional_output
   - units.json: all 6 adventurer types + 5 skeleton types with stats
   - waves.json: all 10 nights including the siege (night 10)
   - terrain.json: tile types with movement_cost and buildable flag
@@ -880,7 +1092,10 @@ Step 3: Implement ResourceManager.gd as an autoload:
   - func add(type: String, amount: int) -> void — adds resource, emits SignalBus.resource_changed
   - func spend(type: String, amount: int) -> bool — returns false if insufficient
   - func can_afford(cost: Dictionary) -> bool — checks all resource types
-  - func apply_upkeep(upkeep: Dictionary) -> void — called at night start
+  - func apply_upkeep() -> void — called at night start via SignalBus.night_started:
+      Deducts 1 food per adventurer in GameState.adventurers.
+      If food reaches 0, emits SignalBus.resource_depleted("food") (triggers 50% effectiveness debuff).
+  - func get_repair_cost(building_id: String) -> Dictionary — returns 50% of original build cost, rounded up
 
 Step 4: Write a validation script (tools/validate_data.gd) that can be run from 
   the Godot editor. It should verify:
@@ -942,10 +1157,14 @@ Step 4: Implement BuildPanel.tscn (UI):
 Step 5: Add 3 building types as concrete scenes using ProductionBuilding.gd:
   Lumbermill.tscn, Mine.tscn, Farm.tscn
   Each just sets the @export variables — no new logic needed.
+  Note: Farm uses mesh_key "building_home_A" (no farm model in Medieval Hexagon Pack).
+  Mine needs conditional_output handling for iron (unlocks day 3).
 
-Step 6: Update Debug.tscn: start with wood=200, stone=100. Verify you can place 
-  a lumbermill on a forest-adjacent tile, a mine on a mountain tile, and a farm on 
-  grass. Verify you cannot place on water or without enough resources.
+Step 6: Update Debug.tscn: override ResourceManager starting amounts to wood=200,
+  stone=100, iron=20, gold=50 for testing. Verify you can place a lumbermill on a
+  forest-adjacent tile, a mine on a mountain tile, and a farm on grass near a well.
+  Verify you cannot place on water or without enough resources. Verify the farm
+  cannot be placed without a well within 2 hexes (requires_nearby_building check).
 
 Done when: Build panel appears on tile click, buildings place correctly with cost 
 deduction, and terrain rules are enforced.
@@ -962,7 +1181,8 @@ Step 1: Implement DayNightCycle.gd as a Node (added to Main.tscn):
   State machine with phases: "day" (90s) → "dusk" (12s) → "night" (variable) → "dawn" (10s) → "day"
   On each transition: emit SignalBus.phase_changed(new_phase)
   On "day" transition: increment GameState.day_number, emit SignalBus.day_started(day_number)
-  On "night" transition: emit SignalBus.night_started(DataLoader.waves[str(day_number)])
+  On "night" transition: call ResourceManager.apply_upkeep() FIRST (deducts food),
+    then emit SignalBus.night_started(DataLoader.waves[str(day_number)])
   Night ends when WaveSpawner emits wave_cleared OR settlement_hp reaches 0.
 
 Step 2: Lighting transitions using a DirectionalLight3D in Main.tscn:
@@ -1292,7 +1512,7 @@ Wire up the final pieces: main menu, settings, and verify everything connects en
 Step 1: MainMenu.tscn. 
   A 3D background showing a pre-built hex map settlement (place some buildings 
   procedurally using the same Medieval Hexagon assets). Slowly rotate the camera.
-  UI overlay: "HEARTHFALL" title (styled Label), "New Game", "Settings", "Quit".
+  UI overlay: "HOLDFAST" title (styled Label), "New Game", "Settings", "Quit".
   New Game: loads Main.tscn and starts a fresh run.
 
 Step 2: Settings menu stub. A panel accessible from Main Menu and from HUD:
@@ -1337,9 +1557,11 @@ Use these at any point during development when you need a specific thing fixed o
 
 **Fix broken asset paths:**
 ```
-Read res://assets/kaykit/ recursively. Read AssetRegistry.gd. Find every MESHES 
-entry where the path does not exist on disk. For each broken path, search the 
-kaykit folder for a filename that closely matches the key name and suggest 
+Read res://assets/kaykit/ recursively, listing all .gltf and .glb files. Read
+AssetRegistry.gd. Find every MESHES entry where the path does not exist on disk.
+Remember: most packs use .gltf (not .glb) and directory names include full KayKit
+names (e.g., "KayKit Medieval Hexagon Pack 1.0.1/"). For each broken path, search
+the kaykit folder for a filename that closely matches the key name and suggest
 the correct path. Update AssetRegistry.gd with confirmed matches.
 ```
 
